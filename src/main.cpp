@@ -1,5 +1,5 @@
-#include <jni.h>
 #include <cstdlib>
+#include <string>
 #include "_config.h"
 #include "log.hpp"
 #include "modloader.hpp"
@@ -15,17 +15,22 @@ void* load_orig() {
   }
   return original_r15_handle;
 }
-ANativeActivity* current_activity;
 
 #ifdef QUEST
+#include <jni.h>
+
+JNIEnv* jni_env = nullptr;
+
 EXPORT_FUNC jint JNI_OnLoad(JavaVM* vm, void*) {
-  JNIEnv* env = nullptr;
+  LOG_INFO("Libr15Loader " GIT_BRANCH "(%X, modified: %d)", GIT_COMMIT, GIT_MODIFIED);
+
+  jni_env = nullptr;
 
   LOG_INFO("JNI_OnLoad called, linking JNI methods");
 
-  vm->AttachCurrentThread(&env, nullptr);
+  vm->AttachCurrentThread(&jni_env, nullptr);
 
-  modloader::preload(env);
+  modloader::preload(jni_env);
 
   return JNI_VERSION_1_6;
 }
@@ -35,10 +40,42 @@ EXPORT_FUNC void JNI_OnUnload(JavaVM* vm, void*) {
   modloader::unload(vm);
 }
 
+std::string GetNativeLibDir(JNIEnv* jenv) {
+  auto activityThreadClass = jenv->FindClass("android/app/ActivityThread");
+  auto activityThreadMethod =
+      jenv->GetStaticMethodID(activityThreadClass, "currentActivityThread", "()Landroid/app/ActivityThread;");
+  auto getApplicationMethod = jenv->GetMethodID(activityThreadClass, "getApplication", "()Landroid/app/Application;");
+  auto contextClass = jenv->FindClass("android/content/Context");
+  auto filesDirMethod = jenv->GetMethodID(contextClass, "getFilesDir", "()Ljava/io/File;");
+  auto activityThread = jenv->CallStaticObjectMethod(activityThreadClass, activityThreadMethod);
+  auto context = jenv->CallObjectMethod(activityThread, getApplicationMethod);
+  auto filesDirObj = jenv->CallObjectMethod(context, filesDirMethod);
+  auto fileClass = jenv->FindClass("java/io/File");
+  auto getAbsolutePath = jenv->GetMethodID(fileClass, "getAbsolutePath", "()Ljava/lang/String;");
+
+  auto getPackageManagerMethod =
+      jenv->GetMethodID(contextClass, "getPackageManager", "()Landroid/content/pm/PackageManager;");
+  auto packageManager = jenv->CallObjectMethod(context, getPackageManagerMethod);
+  auto applicationInfoClass = jenv->FindClass("android/content/pm/ApplicationInfo");
+  auto packageManagerClass = jenv->FindClass("android/content/pm/PackageManager");
+  auto getApplicationInfoMethod =
+      jenv->GetMethodID(contextClass, "getApplicationInfo", "()Landroid/content/pm/ApplicationInfo;");
+  auto applicationInfo = jenv->CallObjectMethod(context, getApplicationInfoMethod);
+  auto sourceDirField = jenv->GetFieldID(applicationInfoClass, "nativeLibraryDir", "Ljava/lang/String;");
+  auto sourceDir = jenv->GetObjectField(applicationInfo, sourceDirField);
+  auto sourceDirjstring = reinterpret_cast<jstring>(sourceDir);
+  auto sourceDirChars = jenv->GetStringUTFChars(sourceDirjstring, nullptr);
+  std::string filesDir = { sourceDirChars };
+  jenv->ReleaseStringUTFChars(sourceDirjstring, sourceDirChars);
+
+  return filesDir;
+}
+
 EXPORT_FUNC void ANativeActivity_onCreate(ANativeActivity* activity, void* savedState, size_t savedStateSize) {
   LOG_INFO("ANativeActivity_onCreate");
-  char const* sopath = nullptr;  // TODO
-  modloader::load(activity->env, sopath);
+
+  auto nativeLibDir = GetNativeLibDir(jni_env);
+  modloader::load(activity->env, nativeLibDir.c_str());
 
   auto handle = load_orig();
   if (!handle) std::exit(1);
