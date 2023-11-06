@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include <android/native_activity.h>
 #include <jni.h>
 
 #include <cstddef>
@@ -41,7 +42,7 @@ struct MAIN_LOCAL path_container {
 
 MAIN_LOCAL std::optional<path_container> getDirs(JNIEnv* env, std::string_view application_id);
 MAIN_LOCAL std::optional<std::string> getApplicationId();
-MAIN_LOCAL bool ensurePerms(JNIEnv* env, std::string_view application_id);
+MAIN_LOCAL bool ensurePerms(JNIEnv* env, ANativeActivity* activity, std::string_view application_id);
 
 namespace literals {
 

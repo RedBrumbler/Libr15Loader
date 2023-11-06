@@ -30,8 +30,6 @@ EXPORT_FUNC jint JNI_OnLoad(JavaVM* vm, void*) {
 
   vm->AttachCurrentThread(&jni_env, nullptr);
 
-  modloader::preload(jni_env);
-
   return JNI_VERSION_1_6;
 }
 
@@ -67,6 +65,8 @@ std::string GetNativeLibDir(JNIEnv* jenv) {
 
 EXPORT_FUNC void ANativeActivity_onCreate(ANativeActivity* activity, void* savedState, size_t savedStateSize) {
   LOG_INFO("ANativeActivity_onCreate");
+
+  modloader::preload(jni_env, activity);
 
   auto nativeLibDir = GetNativeLibDir(jni_env);
   modloader::load(activity->env, nativeLibDir.c_str());
