@@ -46,18 +46,12 @@ std::string GetNativeLibDir(JNIEnv* jenv) {
       jenv->GetStaticMethodID(activityThreadClass, "currentActivityThread", "()Landroid/app/ActivityThread;");
   auto getApplicationMethod = jenv->GetMethodID(activityThreadClass, "getApplication", "()Landroid/app/Application;");
   auto contextClass = jenv->FindClass("android/content/Context");
-  auto filesDirMethod = jenv->GetMethodID(contextClass, "getFilesDir", "()Ljava/io/File;");
   auto activityThread = jenv->CallStaticObjectMethod(activityThreadClass, activityThreadMethod);
   auto context = jenv->CallObjectMethod(activityThread, getApplicationMethod);
-  auto filesDirObj = jenv->CallObjectMethod(context, filesDirMethod);
   auto fileClass = jenv->FindClass("java/io/File");
   auto getAbsolutePath = jenv->GetMethodID(fileClass, "getAbsolutePath", "()Ljava/lang/String;");
 
-  auto getPackageManagerMethod =
-      jenv->GetMethodID(contextClass, "getPackageManager", "()Landroid/content/pm/PackageManager;");
-  auto packageManager = jenv->CallObjectMethod(context, getPackageManagerMethod);
   auto applicationInfoClass = jenv->FindClass("android/content/pm/ApplicationInfo");
-  auto packageManagerClass = jenv->FindClass("android/content/pm/PackageManager");
   auto getApplicationInfoMethod =
       jenv->GetMethodID(contextClass, "getApplicationInfo", "()Landroid/content/pm/ApplicationInfo;");
   auto applicationInfo = jenv->CallObjectMethod(context, getApplicationInfoMethod);
