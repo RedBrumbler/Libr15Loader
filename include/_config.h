@@ -9,8 +9,6 @@
 #define NO_STAT_DUMPS
 #endif
 
-#define LOG_IDENTIFIER "[" LIB_ID "|" VERSION "]"
-
 #if defined(LINUX) || defined(QUEST)
 #include <dlfcn.h>
 #define ORIGINAL_R15 "libr15-original.so"

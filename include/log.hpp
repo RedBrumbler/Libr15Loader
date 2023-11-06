@@ -1,5 +1,7 @@
 #pragma once
 
+#define LOG_IDENTIFIER "[" LIB_ID "|" VERSION "]"
+
 #if defined(QUEST)
 // quest specific includes and logging
 #include <android/log.h>
