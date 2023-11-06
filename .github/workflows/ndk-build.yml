@@ -3,7 +3,9 @@ name: NDK build
 on:
   push:
     branches:
-      - 'master'
+      - 'main'
+      - 'dev/*'
+      - 'feat/*'
     paths-ignore:
       - ".gitignore"
 
