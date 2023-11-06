@@ -1,0 +1,36 @@
+name: NDK build
+
+on:
+  push:
+    branches:
+      - 'master'
+    paths-ignore:
+      - ".gitignore"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        name: Checkout
+        with:
+          submodules: true
+          lfs: true
+
+      - uses: seanmiddleditch/gha-setup-ninja@v3
+
+      - name: Create ndkpath.txt
+        run: |
+          echo "$ANDROID_NDK_LATEST_HOME" > ${GITHUB_WORKSPACE}/ndkpath.txt
+          cat ${GITHUB_WORKSPACE}/ndkpath.txt
+
+      - name: build
+        run: pwsh ./scripts/build.ps1
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: libr15.so
+          path: ${GITHUB_WORKSPACE}/build/libr15.so
+          if-no-files-found: error
