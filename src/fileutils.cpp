@@ -22,6 +22,7 @@
 
 #include "fileutils.hpp"
 
+#include <android/native_activity.h>
 #include <ctype.h>
 #include <jni.h>
 
@@ -65,9 +66,11 @@ char* trimWhitespace(char* str) {
   }
 #endif
 
-bool ensurePermsWithAppId(JNIEnv* env, std::string_view application_id) {
+bool ensurePermsWithAppId(JNIEnv* env, ANativeActivity* activity, std::string_view application_id) {
+  ERR_CHECK(clazz, env->FindClass("com/oculus/gles3jni/MainActivity"));
   ERR_CHECK(intentClass, env->FindClass("android/content/Intent"));
   ERR_CHECK(intentCtorID, env->GetMethodID(intentClass, "<init>", "(Ljava/lang/String;Landroid/net/Uri;)V"));
+  ERR_CHECK(startActivity, env->GetMethodID(clazz, "startActivity", "(Landroid/content/Intent;)V"));
   ERR_CHECK(uriClass, env->FindClass("android/net/Uri"));
   ERR_CHECK(uriParse, env->GetStaticMethodID(uriClass, "parse", "(Ljava/lang/String;)Landroid/net/Uri;"));
   ERR_CHECK(envClass, env->FindClass("android/os/Environment"));
@@ -99,6 +102,8 @@ bool ensurePermsWithAppId(JNIEnv* env, std::string_view application_id) {
     ERR_CHECK(uri, env->CallStaticObjectMethod(uriClass, uriParse, packageName));
     ERR_CHECK(intent, env->NewObject(intentClass, intentCtorID, actionName, uri));
     // At this point, sleep the thread to avoid acting too fast
+    env->CallVoidMethod(activity->clazz, startActivity, intent);
+    if (env->ExceptionCheck()) return false;
     std::this_thread::sleep_for(kDelay);
   }
   return true;
@@ -160,10 +165,10 @@ std::optional<std::string> fileutils::getApplicationId() {
   return std::nullopt;
 }
 
-bool fileutils::ensurePerms(JNIEnv* env, std::string_view application_id) {
+bool fileutils::ensurePerms(JNIEnv* env, ANativeActivity* activity, std::string_view application_id) {
   // TODO: The correct thing to do would be to listen to the completion event and resume modloading when that happens.
   // Instead, we actually sleep the thread, which is potentially problematic.
-  if (ensurePermsWithAppId(env, application_id)) return true;
+  if (ensurePermsWithAppId(env, activity, application_id)) return true;
 
   if (env->ExceptionCheck()) env->ExceptionDescribe();
   LOG_ERROR("libmain.ensurePerms failed! See 'System.err' tag.");

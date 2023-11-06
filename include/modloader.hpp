@@ -2,7 +2,9 @@
 
 #include "modloader.hpp"
 #ifdef QUEST
+#include <android/native_activity.h>
 #include <jni.h>
+
 #endif
 
 #include <filesystem>
@@ -29,7 +31,7 @@ using unload_t = void(JavaVM* vm) noexcept;
 MAIN_LOCAL constexpr auto unloadName = "modloader_unload"sv;
 
 #ifdef QUEST
-MAIN_LOCAL void preload(JNIEnv* env) noexcept;
+MAIN_LOCAL void preload(JNIEnv* env, ANativeActivity* activity) noexcept;
 MAIN_LOCAL void load(JNIEnv* env, char const* soDir) noexcept;
 MAIN_LOCAL void accept_r15_handle(JNIEnv* env, void* r15Handle) noexcept;
 MAIN_LOCAL void unload(JavaVM* vm) noexcept;

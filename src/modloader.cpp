@@ -141,7 +141,7 @@ struct FindResult {
 MAIN_LOCAL void* modloader::modloaderHandle = nullptr;
 
 #ifdef QUEST
-MAIN_LOCAL void modloader::preload(JNIEnv* env) noexcept {
+MAIN_LOCAL void modloader::preload(JNIEnv* env, ANativeActivity* activity) noexcept {
   LOG_VERBOSE("preload: Getting application id");
   auto applicationId = fileutils::getApplicationId();
   if (!applicationId) [[unlikely]] {
@@ -151,7 +151,7 @@ MAIN_LOCAL void modloader::preload(JNIEnv* env) noexcept {
   LOG_VERBOSE("preload: Application ID: %s", applicationId->c_str());
   LOG_VERBOSE("preload: Attempting to acquire activity and permissions");
 
-  fileutils::ensurePerms(env, *applicationId);
+  fileutils::ensurePerms(env, activity, *applicationId);
 
   LOG_VERBOSE("preload: Attempting to find dirs");
 
