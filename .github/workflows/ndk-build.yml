@@ -32,5 +32,5 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: libr15.so
-          path: ${GITHUB_WORKSPACE}/build/libr15.so
+          path: ./build/libr15.so
           if-no-files-found: error
