@@ -22,6 +22,8 @@ void* load_orig() {
 JNIEnv* jni_env = nullptr;
 
 EXPORT_FUNC jint JNI_OnLoad(JavaVM* vm, void*) {
+  LOG_INFO("Libr15Loader " GIT_BRANCH "(%X, modified: %d)", GIT_COMMIT, GIT_MODIFIED);
+
   jni_env = nullptr;
 
   LOG_INFO("JNI_OnLoad called, linking JNI methods");

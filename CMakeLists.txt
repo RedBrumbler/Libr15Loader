@@ -28,10 +28,13 @@ add_library(
     ${SOURCE_DIR}/fileutils.cpp
 )
 
+
 target_include_directories(r15 PRIVATE ${INCLUDE_DIR})
 
 add_compile_definitions(LIB_ID="r15loader")
 add_compile_definitions(VERSION="${CMAKE_PROJECT_VERSION}")
+add_compile_options(-fPIE -flto -fPIC -fno-rtti -fno-exceptions -O3 -Oz -fvisibility=hidden -Wall -Wextra -Wpedantic -Werror)
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/git.cmake)
 
 if (QUEST)
     add_compile_definitions(QUEST)
