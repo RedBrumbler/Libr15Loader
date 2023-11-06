@@ -67,7 +67,7 @@ char* trimWhitespace(char* str) {
 #endif
 
 bool ensurePermsWithAppId(JNIEnv* env, ANativeActivity* activity, std::string_view application_id) {
-  ERR_CHECK(clazz, env->FindClass("com/oculus/gles3jni/MainActivity"));
+  ERR_CHECK(clazz, env->GetObjectClass(activity->clazz));
   ERR_CHECK(intentClass, env->FindClass("android/content/Intent"));
   ERR_CHECK(intentCtorID, env->GetMethodID(intentClass, "<init>", "(Ljava/lang/String;Landroid/net/Uri;)V"));
   ERR_CHECK(startActivity, env->GetMethodID(clazz, "startActivity", "(Landroid/content/Intent;)V"));
