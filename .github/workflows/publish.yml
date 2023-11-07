@@ -1,0 +1,74 @@
+name: publish
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        name: Checkout
+        with:
+          submodules: true
+          lfs: true
+
+      - uses: seanmiddleditch/gha-setup-ninja@v3
+
+      - name: Create ndkpath.txt
+        run: |
+          echo "$ANDROID_NDK_LATEST_HOME" > ${GITHUB_WORKSPACE}/ndkpath.txt
+          cat ${GITHUB_WORKSPACE}/ndkpath.txt
+
+      - name: Get Tag Version
+        id: get_tag_version
+        run: |
+          echo ${GITHUB_REF#refs/tags/}
+          echo "TAG=${GITHUB_REF#refs/tags/}" >> ${GITHUB_OUTPUT}
+          echo "VERSION=${GITHUB_REF#refs/tags/v}" >> ${GITHUB_OUTPUT}
+
+      - name: Write version
+        run: |
+          echo "${{ steps.get_tag_version.outputs.VERSION }}" > version.txt
+
+      - name: build
+        run: pwsh ./scripts/build.ps1
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: libr15.so
+          path: ./build/libr15.so
+          if-no-files-found: error
+
+      - name: Get Release
+        uses: octokit/request-action@v2.x
+        id: get_release
+        with:
+            route: GET /repos/:repository/releases/tags/${{ steps.get_tag_version.outputs.TAG }}
+            repository: ${{ github.repository }}
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get Release Upload URL
+        id: get_upload_url
+        run: |
+          url=$(echo "$response" | jq -r '.upload_url')
+          echo $url
+          echo "upload_url=$url" >> ${GITHUB_OUTPUT}
+        env:
+            response:  ${{ steps.get_release.outputs.data }}
+
+      - name: Upload Release Asset
+        id: upload_release_asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get_upload_url.outputs.upload_url }}
+          asset_path: ./build/libr15.so
+          asset_name: libr15.so
+          asset_content_type: application/octet-stream
