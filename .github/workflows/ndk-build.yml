@@ -2,6 +2,8 @@ name: NDK build
 
 on:
   push:
+    tags:
+      - 'v*'
     branches:
       - 'main'
       - 'dev/**'
